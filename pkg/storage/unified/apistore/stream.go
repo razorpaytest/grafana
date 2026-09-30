@@ -16,7 +16,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -65,7 +65,7 @@ decode:
 		evt, err := d.client.Recv()
 
 		switch {
-		case resource.IsResourceVersionExpired(err):
+		case resourceclient.IsResourceVersionExpired(err):
 			// Surface a 410/Expired status object (instead of an error) so clients
 			// such as reflectors re-list from scratch rather than retrying the
 			// watch from a resource version the server can no longer serve.
@@ -74,7 +74,7 @@ decode:
 			}
 			d.expiredSent = true
 			klog.V(2).Infof("client: watch resource version expired: %s", err)
-			status := resource.AsErrorResult(err)
+			status := resourceclient.AsErrorResult(err)
 			return watch.Error, &metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    status.Code,
