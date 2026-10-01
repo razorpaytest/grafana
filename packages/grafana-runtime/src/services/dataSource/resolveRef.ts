@@ -13,6 +13,8 @@ import { NUMERIC_ID_REF_WARNING } from './constants';
 import { findByType } from './listFilters';
 import { logDataSourceWarning } from './logging';
 
+const NUMERIC_ID = /^-?\d+$/;
+
 /** The public API a lookup came in through, so a numeric-id warning names the right entry point. */
 export type DataSourceLookupApi = 'getDataSourceInstanceSettings' | 'getDataSourceInstance';
 
@@ -68,7 +70,9 @@ function lookupKey(key: string, api: DataSourceLookupApi): DataSourceInstanceLis
     return item;
   }
   const byId = getListItemById(key);
-  if (byId) {
+  // The MT list has no ids, so a numeric id misses there and the caller falls back to the
+  // legacy DataSourceSrv; it is still a caller to move to uids.
+  if (byId || (NUMERIC_ID.test(key) && getDataSourceCacheSource()?.kind === 'mt')) {
     warnNumericIdRef(key, api);
   }
   return byId;
